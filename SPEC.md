@@ -17,7 +17,7 @@ manifests, CI, and an evidence pack that lets an interviewer check each claim.
 
 | User | Constraint |
 |---|---|
-| Aravind (operator) | One person, 9 days, $131.69 of credit, 8 vCPU on-demand quota, runs every `terraform apply` himself |
+| Aravind (operator) | One person, 9 days, $131.69 of credit, 8 vCPU on-demand quota, approves the plan; the agent runs `terraform apply` from it |
 | Recruiter or interviewer | Reads the repo and `docs/evidence/`; every claim links to command output or a screenshot |
 | Developer persona | Pushes app code; sees it running after a merged PR with no `kubectl` access of their own |
 
@@ -40,8 +40,9 @@ manifests, CI, and an evidence pack that lets an interviewer check each claim.
 
 **Infrastructure (Terraform)**
 - `bootstrap/` (local state) creates an S3 state bucket (versioned, SSE, public access
-  blocked), the GitHub Actions OIDC provider, a read-only plan role, an ECR push role scoped
-  to this repo's `main` branch, and a $130 budget with alerts at 25/50/75/90% of actual spend.
+  blocked), the GitHub Actions OIDC provider, one ECR push role scoped to this repo's `main`
+  branch, and a $130 budget with alerts at 25/50/75/90% of actual gross spend (credits
+  excluded, or the budget would always read $0).
 - `infra/` (S3 backend with native lockfile) creates a VPC over 3 AZs with public subnets and
   no NAT, and an EKS 1.37 cluster with one managed node group of 2 × `t3.medium`.
 - Cluster access uses EKS access entries only. No `aws-auth` ConfigMap.
@@ -101,8 +102,12 @@ internet ──HTTP──> ALB (made by AWS LBC) ──> fe pods ──> app1 �
 
 ## Security and privacy
 
-- Trust boundaries: GitHub to AWS through OIDC only. The plan role is read-only. The push role
-  can push only to this repo's ECR repositories and only from `refs/heads/main`.
+- Trust boundaries: GitHub to AWS through OIDC only. CI has exactly one role. It can push only
+  to this repo's ECR repositories and only from `refs/heads/main`. The trust policy pins the
+  repo and owner by numeric ID (owner `95763443`, repo `1453514477`) as well as by name.
+- No CI plan role. A `terraform plan` of `infra/` needs Kubernetes API access for the Helm
+  releases, and giving CI that access would break the "CI never touches the cluster" claim.
+  CI runs static checks; plans run on the operator's machine and go into the PR.
 - Cluster admin: the operator's IAM principal through an access entry with
   `AmazonEKSClusterAdminPolicy`. No other human or CI principal.
 - Pod Identity associations: LBC, Karpenter, EBS CSI, each with its own role.
@@ -160,7 +165,7 @@ and S3 add a few dollars. Target total spend is $50 or less, leaving credit for 
 - Private subnets with NAT, VPC endpoints, multi-cluster, service mesh.
 - Rebuilding what `boutique-platform` already proves: WAF, SLO burn alerts, Loki, Tempo,
   supply-chain signing.
-- A CI `terraform apply` job. Apply stays a human action from the operator's machine.
+- A CI `terraform apply` job. Apply runs from the operator's machine.
 - Keeping anything running after 2026-11-19.
 
 ## Acceptance criteria
@@ -177,7 +182,7 @@ and S3 add a few dollars. Target total spend is $50 or less, leaving credit for 
 - [ ] Karpenter adds a node under load and removes it after. Check: `kubectl get nodeclaims` during and after the load test
 - [ ] HPA scales `app1` under load. Check: `kubectl get hpa -w` output
 - [ ] Grafana shows cluster and app metrics. Check: screenshot
-- [ ] CI never touches the cluster. Check: the IAM policies of both CI roles, pasted, contain no `eks:` action
+- [ ] CI never touches the cluster. Check: the CI role's policy, pasted, has no `eks:` action, and `aws eks list-access-entries` does not list it
 - [ ] Teardown leaves no billable resource. Check: tagged-resource query and `aws eks list-clusters` both empty
 
 ## Unresolved questions

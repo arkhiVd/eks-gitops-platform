@@ -51,9 +51,12 @@ App test and build commands are added in Phase 4.
 ## Working boundaries
 
 - Branch first; never commit or push to `main`.
-- Never run `terraform apply`, `terraform destroy`, `helm install/upgrade`, or a mutating
-  `kubectl` command. Aravind runs those. The agent prepares the plan, reads it line by line,
-  and stops at the gate.
+- The agent runs `terraform apply` and `terraform destroy` (Aravind's instruction,
+  2026-11-11). Only from a saved plan file (`apply tfplan`), only after reading that plan line
+  by line and posting creates / changes / destroys / replaces and the hourly cost delta.
+  An unexpected destroy or replace stops the apply until Aravind confirms.
+- No `helm install/upgrade` or mutating `kubectl` outside Terraform and Argo CD, except the
+  drills in Phase 5 that the ROADMAP names.
 - Read-only AWS and `kubectl get/describe/logs` calls are fine.
 - Never touch the bucket `test-debzm` or anything without the `project=eks-gitops-platform` tag.
 - Never commit `*.tfvars`, `.env`, kubeconfigs, plan files, or state.

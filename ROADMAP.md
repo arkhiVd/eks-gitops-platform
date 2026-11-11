@@ -8,7 +8,8 @@ Hard deadline: Phase 7 teardown finishes by 2026-11-19. The free plan expires
 Every phase is one PR. Change class for Phases 1, 2, 3 and 7 is **Risky** (IAM, network,
 state, cost). Phases 4, 5 and 6 are **Standard** unless they touch IAM.
 
-Approval gates. The agent stops at each one and Aravind runs the command himself:
+Apply gates. The agent runs each command from a saved plan after posting the plan summary
+and cost delta. An unexpected destroy or replace stops the gate until Aravind confirms:
 
 | Gate | Phase | Command | Cost starts |
 |---|---|---|---|
@@ -39,9 +40,10 @@ PR template.
 **Outcome:** remote state, GitHub OIDC trust and a budget exist, with nothing billable running.
 
 **Included:** `bootstrap/` with local state: S3 state bucket, GitHub OIDC provider,
-`gha-plan` role (read-only plus state read), `gha-ecr-push` role (ECR push on this repo's
-repositories, `main` only), budget $130 with 25/50/75/90% alerts. A `validate` workflow with
-fmt, validate, tflint, checkov, actionlint and gitleaks.
+`gha-ecr-push` role (ECR push on this repo's repositories, `main` only), budget $130 with
+25/50/75/90% alerts. A `validate` workflow with fmt, validate, tflint, checkov, trivy,
+actionlint and gitleaks, and an `oidc-probe` workflow that prints the token's `sub` claim and
+tries to assume the push role.
 
 **Dependencies and risks:** the OIDC trust `sub` claim. GitHub now emits
 `repo:owner@id/repo@id:...` for some repos (seen on Clearsky). Read a real token claim from a
@@ -49,7 +51,7 @@ branch run before trusting the pattern.
 
 **Exit criteria:**
 - [ ] `bootstrap` plan is empty after apply
-- [ ] a branch run of `validate` assumes `gha-plan` and fails to assume `gha-ecr-push`
+- [ ] `oidc-probe` from a branch fails to assume `gha-ecr-push`, and the recorded `sub` claim matches the trust policy
 
 **Validation:**
 - Automated: local gate in `AGENTS.md`, CI run on the PR
@@ -64,7 +66,7 @@ branch run before trusting the pattern.
 **Included:** `infra/` with S3 backend, VPC (3 AZ public subnets, no NAT, subnet tags for
 LBC and Karpenter discovery), EKS module, managed node group 2 × t3.medium, managed add-ons,
 access entry for the operator, audit logs with 1-day retention, Pod Identity roles for EBS
-CSI. Plan role gets a CI `terraform plan` job for `infra/`.
+CSI.
 
 **Dependencies and risks:** FREE plan may block `CreateCluster` (unknown). Cost starts here.
 The EKS module creates many IAM objects, so read the plan line by line.
