@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/arkhiVd/eks-gitops-platform.git
-    targetRevision: feat/platform
+    targetRevision: main
     path: gitops/platform/karpenter-nodes
   destination:
     server: https://kubernetes.default.svc
