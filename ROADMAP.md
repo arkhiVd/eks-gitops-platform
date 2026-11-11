@@ -1,6 +1,6 @@
 # eks-gitops-platform: roadmap
 
-Status: Phase 1 in progress (2026-11-11). Bootstrap applied.
+Status: Phase 2 in progress (2026-11-11). Phases 0 and 1 merged.
 
 Hard deadline: Phase 7 teardown finishes by 2026-11-19. The free plan expires
 2026-11-20 16:23 UTC. If the schedule slips, cut Phase 5 or 6, never Phase 7.
@@ -63,7 +63,7 @@ branch run before trusting the pattern.
 **Outcome:** an EKS 1.37 cluster with 2 Ready nodes, reachable only from the operator CIDR.
 
 **Included:** `infra/` with S3 backend, VPC (3 AZ public subnets, no NAT, subnet tags for
-LBC and Karpenter discovery), EKS module, managed node group 2 × t3.medium, managed add-ons,
+LBC and Karpenter discovery), EKS module, managed node group 2 × m7i-flex.large, managed add-ons,
 access entry for the operator, audit logs with 1-day retention, Pod Identity roles for EBS
 CSI.
 
@@ -91,7 +91,7 @@ and Argo CD, Karpenter IAM, SQS interruption queue and Pod Identity, one root Ap
 on-demand), kube-prometheus-stack sized for 2 small nodes.
 
 **Dependencies and risks:** Karpenter and LBC IAM policies are large; pin them to upstream
-policy versions. kube-prometheus-stack can OOM a t3.medium; set resource limits.
+policy versions. kube-prometheus-stack needs limits sized for 2 × 8 GiB nodes.
 
 **Exit criteria:**
 - [ ] all Applications `Synced` and `Healthy`

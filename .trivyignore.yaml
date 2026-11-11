@@ -1,0 +1,10 @@
+# Accepted trivy findings. Each one is a design decision recorded in SPEC.md.
+misconfigurations:
+  - id: AWS-0040
+    statement: Public EKS endpoint is intentional; it is restricted to var.operator_cidrs (SPEC Required behavior).
+  - id: AWS-0041
+    statement: Endpoint CIDRs come from gitignored terraform.tfvars; variable validation rejects 0.0.0.0/0.
+  - id: AWS-0104
+    statement: Nodes need egress to ECR, EKS and public registries; there is no NAT or VPC endpoint (SPEC non-goal).
+  - id: AWS-0164
+    statement: Public subnets with public IPs replace a NAT gateway; node SG has no inbound rule from the internet.
