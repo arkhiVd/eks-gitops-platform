@@ -32,7 +32,7 @@ tflint --recursive
 checkov -d . --framework terraform kubernetes github_actions --skip-path .terraform --quiet --compact
 trivy config --severity HIGH,CRITICAL --skip-dirs '**/.terraform' --ignorefile .trivyignore.yaml .
 actionlint
-kubeconform -strict -summary -ignore-missing-schemas gitops/
+kubeconform -strict -summary -ignore-filename-pattern values.yaml -ignore-filename-pattern README -schema-location default -schema-location https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json gitops/
 gitleaks git --staged --redact .   # before commit; .terraform/ module examples trip --no-git
 gitleaks git --redact .            # history
 git diff --check
@@ -64,7 +64,11 @@ App test and build commands are added in Phase 4.
   by line and posting creates / changes / destroys / replaces and the hourly cost delta.
   An unexpected destroy or replace stops the apply until Aravind confirms.
 - No `helm install/upgrade` or mutating `kubectl` outside Terraform and Argo CD, except the
-  drills in Phase 5 that the ROADMAP names.
+  drills in Phase 5 that the ROADMAP names, and short-lived smoke objects in namespace
+  `smoke` that are deleted in the same session.
+- Testing a gitops change before merge: apply with `-var gitops_revision=<branch>` and point
+  `gitops/apps/*` at the branch. The PR's last commit points them back at `main` (CI checks),
+  and the first apply after merge uses `main` again.
 - Read-only AWS and `kubectl get/describe/logs` calls are fine.
 - Never touch the bucket `test-debzm` or anything without the `project=eks-gitops-platform` tag.
 - Never commit `*.tfvars`, `.env`, kubeconfigs, plan files, or state.

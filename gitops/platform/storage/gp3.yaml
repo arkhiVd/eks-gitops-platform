@@ -1,0 +1,17 @@
+# EKS ships no default StorageClass on 1.30+. gp3, encrypted, bound when the pod is scheduled
+# so the volume lands in the pod's AZ. Volumes are deleted with their PVC.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: "true"
+  tagSpecification_1: "project=eks-gitops-platform"
+  tagSpecification_2: "owner=arkhiVd"
