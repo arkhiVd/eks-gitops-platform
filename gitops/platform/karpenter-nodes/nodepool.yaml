@@ -1,0 +1,32 @@
+# Burst capacity. The FREE plan launches only free-tier-eligible types, and the account has an
+# 8 vCPU on-demand quota: 4 vCPU for the managed nodes plus this 4 vCPU limit stays inside it.
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: burst
+spec:
+  template:
+    metadata:
+      labels:
+        node-role: burst
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["m7i-flex.large", "c7i-flex.large"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+      expireAfter: 24h
+  limits:
+    cpu: "4"
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m

@@ -74,6 +74,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+  kubernetes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: kubeconform
+        run: |
+          curl -sSfL -o kc.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
+          tar xzf kc.tar.gz kubeconform
+          ./kubeconform -strict -summary \
+            -ignore-filename-pattern 'values\.yaml' -ignore-filename-pattern README \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            gitops/
+      - name: Argo CD apps track main
+        run: |
+          # Feature branches may point apps at themselves while testing; main must not.
+          if [ "${GITHUB_BASE_REF:-}" = "main" ] || [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            if grep -rn 'targetRevision: feat/' gitops/apps; then
+              echo "::error::gitops/apps must track main before merge"; exit 1
+            fi
+          fi
+
   actionlint:
     runs-on: ubuntu-latest
     steps:
