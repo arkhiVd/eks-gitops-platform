@@ -41,8 +41,8 @@ manifests, CI, and an evidence pack that lets an interviewer check each claim.
 **Infrastructure (Terraform)**
 - `bootstrap/` (local state) creates an S3 state bucket (versioned, SSE, public access
   blocked), the GitHub Actions OIDC provider, one ECR push role scoped to this repo's `main`
-  branch, and a $130 budget with alerts at 25/50/75/90% of actual gross spend (credits
-  excluded, or the budget would always read $0).
+  branch. No AWS Budget (Aravind's call, 2026-11-11). Spend is checked daily instead with
+  the Cost Explorer query in `AGENTS.md`, credits excluded so the number is real.
 - `infra/` (S3 backend with native lockfile) creates a VPC over 3 AZs with public subnets and
   no NAT, and an EKS 1.37 cluster with one managed node group of 2 × `t3.medium`.
 - Cluster access uses EKS access entries only. No `aws-auth` ConfigMap.

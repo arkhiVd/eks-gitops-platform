@@ -40,6 +40,13 @@ git diff --check
 terraform -chdir=bootstrap plan -out=tfplan
 terraform -chdir=infra plan -out=tfplan
 
+# daily spend check, credits excluded (run every session; no AWS Budget exists)
+aws ce get-cost-and-usage --time-period Start=2026-11-01,End=$(date -u -d tomorrow +%F) \
+  --granularity DAILY --metrics UnblendedCost \
+  --filter '{"Not":{"Dimensions":{"Key":"RECORD_TYPE","Values":["Credit"]}}}' \
+  --query 'ResultsByTime[].[TimePeriod.Start,Total.UnblendedCost.Amount]' --output text
+aws freetier get-account-plan-state --region us-east-1 --query accountPlanRemainingCredits.amount
+
 # cluster access, after Phase 2
 aws eks update-kubeconfig --name eks-gitops --region us-east-1 --alias eks-gitops
 kubectl --context eks-gitops get nodes

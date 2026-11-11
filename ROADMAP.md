@@ -1,6 +1,6 @@
 # eks-gitops-platform: roadmap
 
-Status: Phase 0 in progress (2026-11-11).
+Status: Phase 1 in progress (2026-11-11). Bootstrap applied.
 
 Hard deadline: Phase 7 teardown finishes by 2026-11-19. The free plan expires
 2026-11-20 16:23 UTC. If the schedule slips, cut Phase 5 or 6, never Phase 7.
@@ -37,11 +37,10 @@ PR template.
 
 ## Phase 1: bootstrap (target 2026-11-12)
 
-**Outcome:** remote state, GitHub OIDC trust and a budget exist, with nothing billable running.
+**Outcome:** remote state and GitHub OIDC trust exist, with nothing billable running.
 
 **Included:** `bootstrap/` with local state: S3 state bucket, GitHub OIDC provider,
-`gha-ecr-push` role (ECR push on this repo's repositories, `main` only), budget $130 with
-25/50/75/90% alerts. A `validate` workflow with fmt, validate, tflint, checkov, trivy,
+`gha-ecr-push` role (ECR push on this repo's repositories, `main` only). A `validate` workflow with fmt, validate, tflint, checkov, trivy,
 actionlint and gitleaks, and an `oidc-probe` workflow that prints the token's `sub` claim and
 tries to assume the push role.
 

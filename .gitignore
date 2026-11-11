@@ -18,3 +18,4 @@ kubeconfig*
 __pycache__/
 .venv/
 .pytest_cache/
+plan.txt
