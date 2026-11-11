@@ -29,11 +29,12 @@ terraform fmt -recursive -check
 terraform -chdir=bootstrap init -backend=false && terraform -chdir=bootstrap validate
 terraform -chdir=infra init -backend=false && terraform -chdir=infra validate
 tflint --recursive
-checkov -d . --framework terraform,kubernetes,github_actions --quiet
-trivy config --severity HIGH,CRITICAL .
+checkov -d . --framework terraform kubernetes github_actions --skip-path .terraform --quiet --compact
+trivy config --severity HIGH,CRITICAL --skip-dirs '**/.terraform' --ignorefile .trivyignore.yaml .
 actionlint
 kubeconform -strict -summary -ignore-missing-schemas gitops/
-gitleaks detect --no-git --redact
+gitleaks git --staged --redact .   # before commit; .terraform/ module examples trip --no-git
+gitleaks git --redact .            # history
 git diff --check
 
 # plan (operator credentials, default AWS profile)

@@ -17,7 +17,7 @@ manifests, CI, and an evidence pack that lets an interviewer check each claim.
 
 | User | Constraint |
 |---|---|
-| Aravind (operator) | One person, 9 days, $131.69 of credit, 8 vCPU on-demand quota, approves the plan; the agent runs `terraform apply` from it |
+| Aravind (operator) | One person, 9 days, $131.69 of credit, 8 vCPU on-demand quota, free-tier instance types only, approves the plan; the agent runs `terraform apply` from it |
 | Recruiter or interviewer | Reads the repo and `docs/evidence/`; every claim links to command output or a screenshot |
 | Developer persona | Pushes app code; sees it running after a merged PR with no `kubectl` access of their own |
 
@@ -29,6 +29,7 @@ manifests, CI, and an evidence pack that lets an interviewer check each claim.
 | Credit left | $131.69 | hard ceiling for the whole build |
 | Plan expires | 2026-11-20 16:23 UTC | teardown to $0 finishes by 2026-11-19 |
 | On-demand vCPU quota | 8 | managed nodes plus Karpenter nodes together stay at or under 8 vCPU |
+| EC2 instance types | FREE plan launches only free-tier-eligible types: t3/t4g/t8i micro and small, `c7i-flex.large`, `m7i-flex.large` (found when the first node group failed on t3.medium, 2026-11-11) | nodes are `m7i-flex.large`; Karpenter is limited to the same list |
 | Network Load Balancer | blocked account-wide | edge is an ALB; no Service `type: LoadBalancer` with NLB |
 | NAT gateways | none, $0.045/h each | nodes run in public subnets with locked-down security groups |
 | Route 53 zones, ACM certs | none | the app is served over HTTP on the ALB DNS name |
@@ -44,7 +45,7 @@ manifests, CI, and an evidence pack that lets an interviewer check each claim.
   branch. No AWS Budget (Aravind's call, 2026-11-11). Spend is checked daily instead with
   the Cost Explorer query in `AGENTS.md`, credits excluded so the number is real.
 - `infra/` (S3 backend with native lockfile) creates a VPC over 3 AZs with public subnets and
-  no NAT, and an EKS 1.37 cluster with one managed node group of 2 × `t3.medium`.
+  no NAT, and an EKS 1.37 cluster with one managed node group of 2 × `m7i-flex.large`.
 - Cluster access uses EKS access entries only. No `aws-auth` ConfigMap.
 - The public API endpoint allows only the operator's CIDR (`var.operator_cidrs`).
 - Core add-ons are EKS-managed: `vpc-cni`, `coredns`, `kube-proxy`, `eks-pod-identity-agent`,
@@ -145,14 +146,14 @@ Steady state, `us-east-1`, cluster up:
 | Item | $/hour |
 |---|---|
 | EKS control plane (standard support) | 0.100 |
-| 2 × t3.medium on-demand | 0.083 |
+| 2 × m7i-flex.large on-demand | 0.192 |
 | ALB hour plus light LCU | 0.030 |
 | Public IPv4, about 4 addresses | 0.020 |
 | EBS gp3, about 60 GB | 0.007 |
-| **Total** | **about 0.24, so about $5.80/day** |
+| **Total** | **about 0.35, so about $8.40/day** |
 
-Planned live window 2026-11-13 to 2026-11-19 is about $40. Karpenter bursts, ECR, CloudWatch
-and S3 add a few dollars. Target total spend is $50 or less, leaving credit for other labs.
+Live window 2026-11-11 to 2026-11-19 is about $70. Karpenter bursts, ECR, CloudWatch and S3
+add a few dollars. Target total spend is $85 or less of the $131.69 credit.
 
 - Teardown expectation: destroy everything, including `bootstrap/`, by 2026-11-19. After the
   plan expires the account closes and nothing can be kept there.
@@ -187,7 +188,7 @@ and S3 add a few dollars. Target total spend is $50 or less, leaving credit for 
 
 ## Unresolved questions
 
-- Does the FREE plan allow `CreateCluster`? Nothing here says it is blocked, but NLB was. The
-  first Phase 2 apply answers it. If it is blocked, fall back to the kubeadm-on-EC2 lab.
+- Answered 2026-11-11: the FREE plan allows `eks:CreateCluster`. It blocks non-free-tier
+  instance types, which the node group hit first.
 - Operator CIDR for the API endpoint. A home IP changes and ProtonVPN changes it too. Phase 2
   takes it as a variable; widening it is a one-line apply.

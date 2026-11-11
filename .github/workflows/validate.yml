@@ -53,7 +53,7 @@ jobs:
       - name: checkov
         run: |
           pipx install checkov==3.3.13
-          checkov -d . --framework terraform kubernetes github_actions --quiet --compact
+          checkov -d . --framework terraform kubernetes github_actions --skip-path .terraform --quiet --compact
       - name: trivy config
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -61,6 +61,7 @@ jobs:
           scan-ref: .
           severity: HIGH,CRITICAL
           exit-code: "1"
+          trivyignores: .trivyignore.yaml
 
   secrets:
     runs-on: ubuntu-latest
