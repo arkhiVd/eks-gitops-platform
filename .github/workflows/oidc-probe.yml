@@ -1,0 +1,42 @@
+# Proves the CI trust boundary. On a pull request the assume must fail (sub ends in
+# :pull_request). Dispatched from main it must succeed. It prints only non-secret claims, never the token.
+name: oidc-probe
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/oidc-probe.yml
+      - bootstrap/github_oidc.tf
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print OIDC subject claims
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const token = await core.getIDToken('sts.amazonaws.com');
+            const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+            for (const k of ['sub', 'aud', 'ref', 'repository', 'repository_id', 'repository_owner_id']) {
+              core.info(`${k}=${claims[k]}`);
+            }
+      - name: Try to assume the ECR push role
+        id: assume
+        continue-on-error: true
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::348032171026:role/eks-gitops-gha-ecr-push
+          aws-region: us-east-1
+      - name: Report
+        env:
+          OUTCOME: ${{ steps.assume.outcome }}
+          REF: ${{ github.ref }}
+        run: |
+          echo "ref=$REF assume=$OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then aws sts get-caller-identity --query Arn --output text; fi
