@@ -49,12 +49,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The checkov-action "latest" release still runs checkov 2.0.x, so install the pinned CLI.
       - name: checkov
-        uses: bridgecrewio/checkov-action@99bb2caf247dfd9f03cf984373bc6043d4e32ebf # v12.1347.0
-        with:
-          directory: .
-          framework: terraform,kubernetes,github_actions
-          quiet: true
+        run: |
+          pipx install checkov==3.3.13
+          checkov -d . --framework terraform kubernetes github_actions --quiet --compact
       - name: trivy config
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

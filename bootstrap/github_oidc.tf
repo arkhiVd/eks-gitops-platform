@@ -7,12 +7,11 @@ resource "aws_iam_openid_connect_provider" "github" {
 }
 
 locals {
-  # GitHub can emit the subject with names (repo:owner/repo:...) or with immutable IDs
-  # (repo:owner@id/repo@id:...). Both forms are pinned to main. The ID form survives a
-  # rename and cannot be claimed by a recreated repo of the same name. Phase 1 records which
-  # form this repo emits (oidc-probe workflow); the other one is then removed.
+  # This repo's tokens carry the immutable-ID subject form, recorded by oidc-probe on PR #2:
+  #   sub=repo:arkhiVd@95763443/eks-gitops-platform@1453514477:pull_request
+  # The ID form survives a rename and cannot be claimed by a recreated repo of the same name.
+  # Only main may assume the role.
   push_subjects = [
-    "repo:${var.github_owner}/${var.github_repo}:ref:refs/heads/main",
     "repo:${var.github_owner}@${var.github_owner_id}/${var.github_repo}@${var.github_repo_id}:ref:refs/heads/main",
   ]
 }
