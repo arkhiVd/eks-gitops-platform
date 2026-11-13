@@ -20,7 +20,7 @@ spec:
       labels: { app: fe }
     spec:
       automountServiceAccountToken: false
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 45
       securityContext:
         runAsNonRoot: true
         runAsUser: 101
@@ -31,6 +31,8 @@ spec:
           topologyKey: kubernetes.io/hostname
           # Hard rule: ScheduleAnyway let all six chain pods land on one node (Phase 4).
           whenUnsatisfiable: DoNotSchedule
+          # Count only pods of the same ReplicaSet; old pods mid-rollout skewed placement onto one node.
+          matchLabelKeys: [pod-template-hash]
           labelSelector:
             matchLabels: { app: fe }
       containers:
@@ -54,10 +56,11 @@ spec:
             httpGet: { path: /healthz, port: http }
             periodSeconds: 10
             failureThreshold: 3
-          # Keep serving while the ALB deregistration delay (15 s) runs out; without it the Phase 5 rollback drill saw a 502.
+          # Outlast the ALB deregistration delay (15 s) with margin. 15 s exactly still lost
+          # 10 of 7,496 requests in the Phase 5 rollout under load.
           lifecycle:
             preStop:
-              exec: { command: ["sleep", "15"] }
+              exec: { command: ["sleep", "25"] }
       volumes:
         - name: tmp
           emptyDir: { sizeLimit: 16Mi }

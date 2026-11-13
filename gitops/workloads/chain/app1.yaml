@@ -30,6 +30,8 @@ spec:
           topologyKey: kubernetes.io/hostname
           # Hard rule: ScheduleAnyway let all six chain pods land on one node (Phase 4).
           whenUnsatisfiable: DoNotSchedule
+          # Count only pods of the same ReplicaSet; old pods mid-rollout skewed placement onto one node.
+          matchLabelKeys: [pod-template-hash]
           labelSelector:
             matchLabels: { app: app1 }
       containers:
@@ -56,7 +58,7 @@ spec:
           # Keep serving while kube-proxy on every node drops this pod from the Service; without it the Phase 5 rollback drill saw a 502.
           lifecycle:
             preStop:
-              exec: { command: ["sleep", "5"] }
+              exec: { command: ["sleep", "10"] }
 
 ---
 apiVersion: v1
