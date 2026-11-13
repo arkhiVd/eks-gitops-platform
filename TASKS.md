@@ -6,8 +6,10 @@
 - [x] ECR repos (immutable, scan on push) and VPC CNI network policy applied; re-plan empty
 - [x] Chain manifests: restricted PSA, HPA, PDBs, ALB Ingress, default-deny NetworkPolicies
 - [x] Repo setting: Actions may open PRs (Aravind approved 2026-11-13); default token stays read
-- [ ] Merge, CI pushes images and opens the tag-bump PR, merge it, Argo deploys
-  - Validation: `curl http://<alb>/api/fullchain` returns the full chain; pods run the SHA tag
+- [x] Merge, CI pushes images and opens the tag-bump PR, merge it, Argo deploys (PR #5, #6)
+  - Validated: `/api/fullchain` through the ALB returns the full chain; pods run `c87f2c5eabd1`;
+    NetworkPolicy deny paths time out. Evidence in `docs/evidence/deploy.md`
+- [ ] Follow-ups for Phase 5: `--provenance=false` builds; `DoNotSchedule` spread for fe and app1
 
 ## Completed
 
