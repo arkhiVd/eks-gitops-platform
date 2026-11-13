@@ -1,6 +1,6 @@
 # eks-gitops-platform: roadmap
 
-Status: Phase 4 in progress (2026-11-13). Phases 0 to 3 merged.
+Status: Phase 5 done (2026-11-14). Next: Phase 6 write-up, Phase 7 teardown by 2026-11-19.
 
 Hard deadline: Phase 7 teardown finishes by 2026-11-19. The free plan expires
 2026-11-20 16:23 UTC. If the schedule slips, cut Phase 5 or 6, never Phase 7.
