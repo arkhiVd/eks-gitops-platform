@@ -65,7 +65,10 @@ jobs:
         run: |
           tag="${GITHUB_SHA::12}"
           ref="$REGISTRY/eks-gitops/$SERVICE:$tag"
-          docker build --pull --build-arg APP_VERSION="$tag" -t "$ref" "app/$SERVICE"
+          # Single-platform manifest, no attestation index: ECR basic scanning cannot scan an
+          # index and the attestations showed up as untagged images (Phase 4).
+          docker build --pull --provenance=false --sbom=false \
+            --build-arg APP_VERSION="$tag" -t "$ref" "app/$SERVICE"
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
       - name: Scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
