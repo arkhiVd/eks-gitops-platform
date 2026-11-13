@@ -19,6 +19,7 @@ spec:
       labels: { app: app2 }
     spec:
       automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -50,6 +51,10 @@ spec:
             httpGet: { path: /healthz, port: http }
             periodSeconds: 10
             failureThreshold: 3
+          # Keep serving while kube-proxy on every node drops this pod from the Service; without it the Phase 5 rollback drill saw a 502.
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
 
 ---
 apiVersion: v1

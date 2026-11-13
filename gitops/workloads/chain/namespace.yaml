@@ -7,3 +7,6 @@ metadata:
     # meet the restricted profile.
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
+    # LBC injects a readiness gate: a new pod is not Ready until the ALB reports its target
+    # healthy, so a rollout never removes old pods before the ALB can reach new ones.
+    elbv2.k8s.aws/pod-readiness-gate-inject: enabled
