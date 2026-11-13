@@ -20,6 +20,7 @@ spec:
       labels: { app: fe }
     spec:
       automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
         runAsUser: 101
@@ -53,6 +54,10 @@ spec:
             httpGet: { path: /healthz, port: http }
             periodSeconds: 10
             failureThreshold: 3
+          # Keep serving while the ALB deregistration delay (15 s) runs out; without it the Phase 5 rollback drill saw a 502.
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "15"] }
       volumes:
         - name: tmp
           emptyDir: { sizeLimit: 16Mi }
