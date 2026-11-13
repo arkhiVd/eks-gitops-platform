@@ -1,0 +1,88 @@
+# Default deny in both directions, then one allow per hop of the chain plus DNS.
+# Enforced by the VPC CNI network policy agent (infra/eks.tf, enableNetworkPolicy).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: chain
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: chain
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { k8s-app: kube-dns }
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+# ALB targets pod IPs directly; its nodes live in the VPC's public subnets.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fe-from-alb
+  namespace: chain
+spec:
+  podSelector:
+    matchLabels: { app: fe }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.40.0.0/16 }
+      ports:
+        - { protocol: TCP, port: 8080 }
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: { app: app1 }
+      ports:
+        - { protocol: TCP, port: 8081 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app1-from-fe
+  namespace: chain
+spec:
+  podSelector:
+    matchLabels: { app: app1 }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: fe }
+      ports:
+        - { protocol: TCP, port: 8081 }
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: { app: app2 }
+      ports:
+        - { protocol: TCP, port: 8082 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app2-from-app1
+  namespace: chain
+spec:
+  podSelector:
+    matchLabels: { app: app2 }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: app1 }
+      ports:
+        - { protocol: TCP, port: 8082 }

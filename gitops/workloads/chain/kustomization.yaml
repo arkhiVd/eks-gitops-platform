@@ -9,6 +9,7 @@ resources:
   - hpa.yaml
   - pdb.yaml
   - ingress.yaml
+  - networkpolicy.yaml
 labels:
   - pairs:
       app.kubernetes.io/part-of: chain

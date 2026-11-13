@@ -32,7 +32,7 @@ tflint --recursive
 checkov -d . --framework terraform kubernetes github_actions --skip-path .terraform --quiet --compact
 trivy config --severity HIGH,CRITICAL --skip-dirs '**/.terraform' --ignorefile .trivyignore.yaml .
 actionlint
-kubeconform -strict -summary -ignore-filename-pattern values.yaml -ignore-filename-pattern README -schema-location default -schema-location https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json gitops/
+kubeconform -strict -summary -ignore-filename-pattern values.yaml -ignore-filename-pattern README -ignore-filename-pattern kustomization.yaml -schema-location default -schema-location https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json gitops/
 gitleaks git --staged --redact .   # before commit; .terraform/ module examples trip --no-git
 gitleaks git --redact .            # history
 git diff --check
@@ -54,7 +54,13 @@ kubectl --context eks-gitops get nodes
 kubectl --context eks-gitops -n argocd get applications
 ```
 
-App test and build commands are added in Phase 4.
+# app (Phase 4)
+uv venv -q app/.venv && uv pip install -q -p app/.venv -r app/requirements-dev.txt
+app/.venv/bin/ruff check . && app/.venv/bin/ruff format --check .
+app/.venv/bin/pytest -q app
+for s in fe app1 app2; do docker build -q -t eks-gitops/$s:local app/$s; done
+for s in fe app1 app2; do trivy image --severity HIGH,CRITICAL --ignore-unfixed eks-gitops/$s:local; done
+kubectl kustomize gitops/workloads/chain | kubeconform -strict -summary -
 
 ## Working boundaries
 

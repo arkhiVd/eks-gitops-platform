@@ -1,0 +1,121 @@
+# Build pipeline for the chain services. On a PR: test, build, scan. On main: also push to ECR
+# through the OIDC role (main-only trust), then open a PR that bumps the image tags in
+# gitops/workloads/chain. Merging that PR is the deploy; Argo CD rolls it out. CI never talks
+# to the cluster.
+name: app
+
+on:
+  pull_request:
+    paths:
+      - app/**
+      - ruff.toml
+      - .github/workflows/app.yml
+  push:
+    branches: [main]
+    paths:
+      - app/**
+      - .github/workflows/app.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  REGISTRY: 348032171026.dkr.ecr.us-east-1.amazonaws.com
+  PUSH_ROLE: arn:aws:iam::348032171026:role/eks-gitops-gha-ecr-push
+  IS_MAIN: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15"
+      - run: pip install -r app/requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q app
+
+  image:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: true
+      matrix:
+        service: [fe, app1, app2]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build
+        id: build
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: |
+          tag="${GITHUB_SHA::12}"
+          ref="$REGISTRY/eks-gitops/$SERVICE:$tag"
+          docker build --pull --build-arg APP_VERSION="$tag" -t "$ref" "app/$SERVICE"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - name: Scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ steps.build.outputs.ref }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: AWS credentials (main only)
+        if: env.IS_MAIN == 'true'
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ env.PUSH_ROLE }}
+          aws-region: us-east-1
+      - name: Push (main only)
+        if: env.IS_MAIN == 'true'
+        env:
+          REF: ${{ steps.build.outputs.ref }}
+        run: |
+          aws ecr get-login-password --region us-east-1 \
+            | docker login --username AWS --password-stdin "$REGISTRY"
+          docker push "$REF"
+
+  bump:
+    needs: image
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Open tag-bump PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_SHA::12}"
+          branch="deploy/$tag"
+          file=gitops/workloads/chain/kustomization.yaml
+          sed -i -E "s/^(    newTag: ).*/\1$tag/" "$file"
+          git diff --stat
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -am "deploy(chain): images $tag"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "deploy(chain): images $tag" \
+            --body "Built, scanned and pushed by run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} from ${GITHUB_SHA}. Merging deploys it: Argo CD syncs gitops/workloads/chain. Rollback: revert this PR's merge commit."
+          # PRs opened with GITHUB_TOKEN do not trigger workflows; dispatch the checks explicitly.
+          gh workflow run validate.yml --ref "$branch"

@@ -2,6 +2,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: fe
+  namespace: chain
 spec:
   minAvailable: 1
   selector:
@@ -11,6 +12,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: app1
+  namespace: chain
 spec:
   minAvailable: 1
   selector:

@@ -30,6 +30,8 @@ module "eks" {
     vpc-cni = {
       addon_version  = "v1.22.4-eksbuild.14"
       before_compute = true
+      # Runs the network policy agent so NetworkPolicy objects are enforced (eBPF).
+      configuration_values = jsonencode({ enableNetworkPolicy = "true" })
     }
     eks-pod-identity-agent = {
       addon_version  = "v1.4.1-eksbuild.3"
