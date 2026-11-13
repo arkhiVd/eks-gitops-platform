@@ -27,7 +27,8 @@ spec:
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          # Hard rule: ScheduleAnyway let all six chain pods land on one node (Phase 4).
+          whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels: { app: app1 }
       containers:
