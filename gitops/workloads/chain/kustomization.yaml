@@ -18,10 +18,10 @@ labels:
 images:
   - name: fe
     newName: 348032171026.dkr.ecr.us-east-1.amazonaws.com/eks-gitops/fe
-    newTag: unset
+    newTag: c87f2c5eabd1
   - name: app1
     newName: 348032171026.dkr.ecr.us-east-1.amazonaws.com/eks-gitops/app1
-    newTag: unset
+    newTag: c87f2c5eabd1
   - name: app2
     newName: 348032171026.dkr.ecr.us-east-1.amazonaws.com/eks-gitops/app2
-    newTag: unset
+    newTag: c87f2c5eabd1
