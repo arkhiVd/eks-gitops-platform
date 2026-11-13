@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: chain
+resources:
+  - namespace.yaml
+  - fe.yaml
+  - app1.yaml
+  - app2.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - ingress.yaml
+  - networkpolicy.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: chain
+    includeSelectors: false
+# Tags are commit SHAs. The app workflow opens a PR that changes only these three lines.
+images:
+  - name: fe
+    newName: 348032171026.dkr.ecr.us-east-1.amazonaws.com/eks-gitops/fe
+    newTag: unset
+  - name: app1
+    newName: 348032171026.dkr.ecr.us-east-1.amazonaws.com/eks-gitops/app1
+    newTag: unset
+  - name: app2
+    newName: 348032171026.dkr.ecr.us-east-1.amazonaws.com/eks-gitops/app2
+    newTag: unset

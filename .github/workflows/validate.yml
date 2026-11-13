@@ -86,10 +86,14 @@ jobs:
             https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
           tar xzf kc.tar.gz kubeconform
           ./kubeconform -strict -summary \
-            -ignore-filename-pattern 'values\.yaml' -ignore-filename-pattern README \
+            -ignore-filename-pattern 'values\.yaml' -ignore-filename-pattern README -ignore-filename-pattern kustomization.yaml \
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
             gitops/
+      - name: kubeconform (rendered kustomize)
+        run: |
+          kubectl kustomize gitops/workloads/chain \
+            | ./kubeconform -strict -summary -schema-location default -
       - name: Argo CD apps track main
         run: |
           # Feature branches may point apps at themselves while testing; main must not.

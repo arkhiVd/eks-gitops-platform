@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: chain
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/arkhiVd/eks-gitops-platform.git
+    targetRevision: main
+    path: gitops/workloads/chain
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: chain
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+  # The HPA owns app1's replica count; without this Argo would reset it to 2 on every sync.
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: app1
+      jsonPointers: [/spec/replicas]

@@ -1,0 +1,23 @@
+# One internet-facing ALB, created by the AWS Load Balancer Controller. Targets are pod IPs.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chain
+  namespace: chain
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "10"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=15
+    alb.ingress.kubernetes.io/tags: project=eks-gitops-platform,owner=arkhiVd
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: fe, port: { number: 80 } }
