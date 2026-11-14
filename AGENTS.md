@@ -9,7 +9,7 @@ deploys everything else from `gitops/`, GitHub Actions builds images and opens t
 
 ## Architecture
 
-- `bootstrap/` holds local state, never committed: state bucket, GitHub OIDC provider, CI roles, budget
+- `bootstrap/` holds local state, never committed: state bucket, GitHub OIDC provider, the one CI role
 - `infra/` uses the S3 backend: VPC, EKS, node group, add-ons, IAM for in-cluster controllers, LBC and Argo CD Helm releases
 - `gitops/` is everything Argo CD syncs. `gitops/root.yaml` is the app-of-apps entry
 - `app/` holds the three service sources (`fe`, `app1`, `app2`) with Dockerfiles and tests
