@@ -1,13 +1,13 @@
 # eks-gitops-platform: tasks
 
-## Current phase: 6, write-up (in review)
+## Current phase: 7, teardown (done 2026-11-14, evidence in `docs/evidence/teardown.md`)
 
-- [x] README with architecture diagram, claims table linked to evidence, cost actuals
-- [x] ADRs 0001 to 0006 in `docs/adr/`
-- [x] Screenshots in `docs/screenshots/`: Argo CD apps and tree, Grafana cluster, namespace and network
-- [x] Grafana: no chain dashboard, the services expose no metrics; built-in dashboards filtered to `chain` instead
+- [x] Ingress, Prometheus PVC, NodePool removed through Argo CD before Terraform
+- [x] `infra/` destroyed from a saved plan: 92 destroyed
+- [x] `bootstrap/` destroyed from a saved plan: 10 destroyed, state bucket emptied by `force_destroy`
+- [x] Sweep: no cluster, ALB, instance, volume, ENI, VPC, ECR repo, queue, role or bucket of ours left
+- [ ] Cost Explorer shows $0 for this project from 2026-11-15
 - [ ] Resume bullet: proposed to Aravind outside the repo; Aravind decides
-- [ ] Final cost number: Phase 7 replaces the projection in README
 
 ## Completed
 
@@ -18,3 +18,4 @@
 - [x] 2026-11-11 Phase 3 platform applied, see `docs/evidence/platform.md` (PR #4)
 - [x] 2026-11-14 Phase 4 pipeline deploy, see `docs/evidence/deploy.md` (PRs #5, #6, #7)
 - [x] 2026-11-14 Phase 5 drills, see `docs/evidence/drills.md` (PRs #8 to #13)
+- [x] 2026-11-14 Phase 6 write-up: README, ADRs, screenshots (PR #14)

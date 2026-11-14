@@ -5,10 +5,11 @@ GitHub Actions never gets cluster credentials. CI builds images, pushes them to 
 OIDC and opens a pull request that bumps the image tag. Merging that PR is the deploy.
 Reverting it is the rollback.
 
-I built it in nine days on an AWS free-plan account with $131.69 of credit that was going to
-expire anyway. The cluster is temporary and gets destroyed by 2026-11-19. The repo, the
-evidence in [`docs/evidence/`](docs/evidence/) and the decisions in [`docs/adr/`](docs/adr/)
-are what stays.
+I built it on an AWS free-plan account with $131.69 of credit that was going to expire
+anyway. The cluster ran from 2026-11-11 to 2026-11-14 and is now destroyed, down to the state
+bucket ([teardown evidence](docs/evidence/teardown.md)). The repo, the evidence in
+[`docs/evidence/`](docs/evidence/) and the decisions in [`docs/adr/`](docs/adr/) are what
+stays.
 
 ![Argo CD tree for the chain app](docs/screenshots/argocd-chain.png)
 
@@ -26,6 +27,7 @@ are what stays.
 | `git revert` of a deploy PR serves the old version 26 s after merge | [drills.md](docs/evidence/drills.md) |
 | Full rollout behind the ALB with 0 of 9,000 requests failed | [drills.md](docs/evidence/drills.md), [ADR 0005](docs/adr/0005-alb-zero-downtime-rollouts.md) |
 | Losing the node that ran Argo CD and Prometheus cost 0.09% of requests; Karpenter replaced it in the right AZ | [drills.md](docs/evidence/drills.md) |
+| Teardown left nothing billable: 92 + 10 resources destroyed from saved plans, then an account sweep | [teardown.md](docs/evidence/teardown.md) |
 
 ## Architecture
 
@@ -100,13 +102,16 @@ Cost Explorer, credits excluded, so these are the real charges the credit paid f
 | 2026-11-11 | $5.89 | bootstrap, cluster up in the afternoon |
 | 2026-11-12 | $7.85 | full day, platform and Karpenter tests |
 | 2026-11-13 | $7.60 | full day, app and pipeline |
+| 2026-11-14 | not posted yet | drills write-up, then teardown at 09:44 to 10:00 |
 
 By service for 2026-11-11 to 11-13: EC2 compute $12.13, EKS $6.60, EC2 other (EBS) $1.52,
 public IPv4 $0.74, KMS $0.19, ALB $0.16, ECR, S3 and SQS under $0.01 each.
 
-A full day costs about $7.70, or $0.32/h, against the $0.35/h estimate in
-[SPEC.md](SPEC.md#cost-and-limits). Running until teardown on 2026-11-19 puts the total near
-$60 of the $131.69 credit. Phase 7 replaces this paragraph with the final number.
+A full day cost about $7.70, or $0.32/h, against the $0.35/h estimate in
+[SPEC.md](SPEC.md#cost-and-limits). Teardown finished at 10:00 UTC on 2026-11-14, five days
+before the deadline. The project cost $21.35 through 2026-11-13, and 2026-11-14 adds about
+10 cluster hours, roughly $3, once Cost Explorer posts it. That puts the whole build near $25 of
+the $131.69 credit, well under the $85 target.
 
 ## Decisions
 
