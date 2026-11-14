@@ -1,13 +1,13 @@
 # eks-gitops-platform: tasks
 
-## Current phase: 5, operations drills (done, evidence in `docs/evidence/drills.md`)
+## Current phase: 6, write-up (in review)
 
-- [x] Drift self-heal: scale + deleted Service reverted in 10 s
-- [x] HPA: app1 2 → 6 under 665 req/s, back to 2 after stabilization
-- [x] Rollback via `git revert` (PR #10), old version live in 26 s
-- [x] Zero-downtime rollouts: 0 / 9,000 failed after PRs #11 and #12
-- [x] Node loss: Karpenter replaced capacity in the volume's AZ; 0.09% errors
-- [ ] Grafana chain dashboard, deferred to Phase 6
+- [x] README with architecture diagram, claims table linked to evidence, cost actuals
+- [x] ADRs 0001 to 0006 in `docs/adr/`
+- [x] Screenshots in `docs/screenshots/`: Argo CD apps and tree, Grafana cluster, namespace and network
+- [x] Grafana: no chain dashboard, the services expose no metrics; built-in dashboards filtered to `chain` instead
+- [ ] Resume bullet: proposed to Aravind outside the repo; Aravind decides
+- [ ] Final cost number: Phase 7 replaces the projection in README
 
 ## Completed
 
@@ -17,3 +17,4 @@
 - [x] 2026-11-11 Phase 2 cluster applied, see `docs/evidence/cluster.md` (PR #3)
 - [x] 2026-11-11 Phase 3 platform applied, see `docs/evidence/platform.md` (PR #4)
 - [x] 2026-11-14 Phase 4 pipeline deploy, see `docs/evidence/deploy.md` (PRs #5, #6, #7)
+- [x] 2026-11-14 Phase 5 drills, see `docs/evidence/drills.md` (PRs #8 to #13)
